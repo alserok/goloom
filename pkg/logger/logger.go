@@ -1,5 +1,7 @@
 package logger
 
+import "context"
+
 type Logger interface {
 	Info(msg string, args ...Arg)
 	Warn(msg string, args ...Arg)
@@ -32,4 +34,18 @@ func WithArg(key, val string) Arg {
 type Arg struct {
 	key string
 	val string
+}
+
+type loggerCtxKeyType string
+
+const (
+	loggerCtxKey loggerCtxKeyType = "ctx_logger"
+)
+
+func WrapLogger(ctx context.Context, log Logger) context.Context {
+	return context.WithValue(ctx, loggerCtxKey, log)
+}
+
+func UnwrapLogger(ctx context.Context) Logger {
+	return ctx.Value(loggerCtxKey).(Logger)
 }
