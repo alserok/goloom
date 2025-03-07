@@ -6,6 +6,7 @@ import (
 	"github.com/alserok/goloom/internal/service/models"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const (
@@ -45,6 +46,14 @@ const (
             margin-bottom: 24px;
             font-size: 28px;
             font-weight: 600;
+        }
+
+        h3 {
+            text-align: center;
+            color: #ffffff; /* White heading */
+            margin-bottom: 24px;
+            font-size: 16px;
+            font-weight: 400;
         }
 
         table {
@@ -159,6 +168,7 @@ const (
 <div class="container">
     <button class="refresh-button" onclick="window.location.reload()">↻</button>
     <h1>Goloom</h1>
+	<h3 style="color:gray">Updated at: %s</h3>
     <table>
         <thead>
             <tr>
@@ -180,14 +190,15 @@ func NewStatePage(ctx context.Context, states []models.ServiceState) (string, er
 	var sb strings.Builder
 
 	for _, state := range states {
-		if state.Status == http.StatusOK {
+		switch state.Status {
+		case http.StatusOK:
 			sb.WriteString(fmt.Sprintf(`
 			<tr>
 				<td>%s</td>
 				<td><span class="status up">OK</span></td>
 			</tr>
 		`, state.Service))
-		} else {
+		default:
 			sb.WriteString(fmt.Sprintf(`
 			<tr>
 				<td>%s</td>
@@ -197,7 +208,7 @@ func NewStatePage(ctx context.Context, states []models.ServiceState) (string, er
 		}
 	}
 
-	page := fmt.Sprintf(statePage, sb.String())
+	page := fmt.Sprintf(statePage, time.Now().Format("2006-01-02 15:04:05"), sb.String())
 
 	return page, nil
 }

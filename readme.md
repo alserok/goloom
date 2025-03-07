@@ -1,8 +1,14 @@
-# Goloom
+# Goloom 🪼
 
 ---
 
-Goloom is useful tool for online configuration your apps. 
+Goloom is useful tool for online configuration your apps and monitoring their states.
+
+### State checker
+
+Monitor your services state using web interface
+
+![img.png](images/state_checker.png)
 
 ---
 
