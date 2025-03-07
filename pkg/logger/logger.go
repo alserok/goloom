@@ -24,7 +24,7 @@ func NewLogger(t uint, env string) Logger {
 	}
 }
 
-func WithArg(key, val string) Arg {
+func WithArg(key string, val any) Arg {
 	return Arg{
 		key: key,
 		val: val,
@@ -33,7 +33,7 @@ func WithArg(key, val string) Arg {
 
 type Arg struct {
 	key string
-	val string
+	val any
 }
 
 type loggerCtxKeyType string

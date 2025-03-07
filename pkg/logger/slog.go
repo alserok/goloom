@@ -14,9 +14,8 @@ func newSlog(env string) *slogLogger {
 
 	switch env {
 	case "DEV":
-		l = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			AddSource: true,
-			Level:     slog.LevelDebug,
+		l = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
 		}))
 	default:
 		var err error
@@ -27,8 +26,7 @@ func newSlog(env string) *slogLogger {
 		}
 
 		l = slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stdout, f), &slog.HandlerOptions{
-			AddSource: true,
-			Level:     slog.LevelInfo,
+			Level: slog.LevelInfo,
 		}))
 	}
 
