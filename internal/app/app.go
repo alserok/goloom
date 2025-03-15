@@ -25,6 +25,8 @@ func MustStart(cfg *config.Config) {
 
 	log.Info("starting goloom 🚧", logger.WithArg("port", cfg.Port))
 
+	log.Info("initial config", logger.WithArg("services", cfg.State.Services), logger.WithArg("check period", cfg.State.CheckPeriod))
+
 	repo := local.NewRepository(local.MustSetup(cfg.Storage.Dir))
 	srvc := service.New(repo, pages.NewConstructor())
 	serv := server.New(server.HTTP, srvc, log)
