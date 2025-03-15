@@ -1,9 +1,10 @@
-package files
+package local
 
 import (
 	"context"
 	"fmt"
 	"github.com/alserok/goloom/internal/service/models"
+	"github.com/alserok/goloom/internal/utils"
 	"io"
 	"os"
 	"sync"
@@ -11,7 +12,8 @@ import (
 
 func NewRepository(dir string) *repository {
 	return &repository{
-		dir: dir,
+		dir:          dir,
+		stateStorage: make(map[string]int),
 	}
 }
 
@@ -68,14 +70,14 @@ func (r *repository) DeleteFile(ctx context.Context, path string) error {
 }
 
 func (r *repository) GetFile(ctx context.Context, path string) ([]byte, error) {
-	f, err := os.OpenFile(fmt.Sprintf("%s/%s", r.dir, path), os.O_RDONLY, 0777)
+	f, err := os.OpenFile(path, os.O_RDONLY, 0777)
 	if err != nil {
-		// TODO
+		return nil, utils.NewError(err.Error(), utils.ErrInternal)
 	}
 
 	b, err := io.ReadAll(f)
 	if err != nil {
-		// TODO
+		return nil, utils.NewError(err.Error(), utils.ErrInternal)
 	}
 
 	return b, nil

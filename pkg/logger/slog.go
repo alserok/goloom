@@ -20,7 +20,7 @@ func newSlog(env string) *slogLogger {
 	default:
 		var err error
 
-		f, err = os.OpenFile("logs.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
+		f, err = os.OpenFile("logs.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 		if err != nil {
 			panic("failed to open logs file: " + err.Error())
 		}

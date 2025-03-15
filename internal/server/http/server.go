@@ -4,17 +4,21 @@ import (
 	"context"
 	"errors"
 	"github.com/alserok/goloom/internal/service"
+	"github.com/alserok/goloom/pkg/logger"
 	"net"
 	"net/http"
 )
 
-func NewServer(srvc service.Service) *server {
-	mux := http.NewServeMux()
+func NewServer(srvc service.Service, log logger.Logger) *server {
+	s := &http.Server{}
 
-	setupRoutes(mux, newHandler(srvc))
+	mux := http.NewServeMux()
+	s.Handler = mux
+
+	setupRoutes(mux, s, newHandler(srvc), log)
 
 	return &server{
-		s: &http.Server{Handler: mux},
+		s: s,
 	}
 }
 

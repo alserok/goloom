@@ -6,10 +6,11 @@ import (
 	"github.com/alserok/goloom/internal/config"
 	"github.com/alserok/goloom/internal/server"
 	"github.com/alserok/goloom/internal/service"
-	"github.com/alserok/goloom/internal/storage/files"
+	"github.com/alserok/goloom/internal/storage/local"
 	"github.com/alserok/goloom/internal/workers"
 	state "github.com/alserok/goloom/internal/workers/health_state"
 	"github.com/alserok/goloom/pkg/logger"
+	"github.com/alserok/goloom/static/pages"
 	"os/signal"
 	"syscall"
 
@@ -24,11 +25,11 @@ func MustStart(cfg *config.Config) {
 
 	log.Info("starting goloom 🚧", logger.WithArg("port", cfg.Port))
 
-	repo := files.NewRepository(files.MustSetup(cfg.Storage.Dir))
-	srvc := service.New(repo)
-	serv := server.New(server.HTTP, srvc)
+	repo := local.NewRepository(local.MustSetup(cfg.Storage.Dir))
+	srvc := service.New(repo, pages.NewConstructor())
+	serv := server.New(server.HTTP, srvc, log)
 
-	launcher := workers.NewLauncher(log, state.New(cfg.Services, srvc))
+	launcher := workers.NewLauncher(log, state.New(cfg.State.Services, cfg.State.CheckPeriod, srvc))
 	defer launcher.Stop()
 	launcher.Launch()
 

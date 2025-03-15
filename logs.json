@@ -1,2 +1,0 @@
-{"time":"2025-03-07T23:56:12.590921915+03:00","level":"INFO","source":{"function":"github.com/alserok/goloom/pkg/logger.(*slogLogger).Info","file":"/home/alserok/dev/projects/goloom/pkg/logger/slog.go","line":58},"msg":"starting goloom 🚧","port":"6070"}
-{"time":"2025-03-07T23:56:12.591056403+03:00","level":"INFO","source":{"function":"github.com/alserok/goloom/pkg/logger.(*slogLogger).Info","file":"/home/alserok/dev/projects/goloom/pkg/logger/slog.go","line":56},"msg":"goloom is running ✅"}

@@ -3,6 +3,11 @@ package models
 type Config map[string]any
 
 type UpdateConfigReq struct {
-	Path   string `json:"path"`
-	Config Config `json:"config"`
+	Content string `json:"config"`
+}
+
+type Dir struct {
+	Path    string          `json:"path"`
+	Name    string          `json:"name"`
+	Content map[string]bool `json:"content"`
 }

@@ -1,33 +1,88 @@
 package pages
 
 import (
-	"context"
-	"fmt"
-	"github.com/alserok/goloom/internal/service/models"
-	"net/http"
-	"strings"
-	"time"
+	"html/template"
 )
 
 const (
-	statePage = `<!DOCTYPE html>
+	statePage = `
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Status</title>
+    <title>🪼 Goloom</title>
     <style>
-        /* Dark theme base styles */
         body {
-            font-family: 'Arial', sans-serif;
+			font-family: 'Montserrat', sans-serif;
             background-color: #1a1a1a; /* Dark background */
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
+			flex-direction: column;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             color: #e0e0e0; /* Light text color */
+        }
+
+        .navbar {
+            background-color: #2d2d2d; /* Dark navbar background */
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 25px; /* Rounded borders */
+            margin: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+			gap: 20px;
+			width: 70vw;
+        }
+
+        /* Navbar brand/logo */
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff; /* White text */
+            text-decoration: none;
+        }
+
+        /* Navbar links */
+.navbar-links {
+            display: flex;
+            gap: 20px; /* Space between links */
+        }
+
+        .navbar-links a {
+            color: #e0e0e0; /* Light text color */
+            text-decoration: none;
+            padding: 5px 18px;
+            border-radius: 20px; /* Rounded borders for links */
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .navbar-links a:hover {
+            background-color: #007bff; /* Blue background on hover */
+            color: white; /* White text on hover */
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px;
+            }
+
+            .navbar-links {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%%;
+            }
+
+            .navbar-links a {
+                width: 100%%;
+                text-align: center;
+            }
         }
 
         .container {
@@ -57,7 +112,7 @@ const (
         }
 
         table {
-            width: 100%%;
+            width: 70vw;
             border-collapse: collapse;
             margin-top: 16px;
         }
@@ -111,7 +166,7 @@ const (
             background-color: gray; /* Blue to match the header */
             color: white;
             border: none;
-            border-radius: 50%%;
+            border-radius: 50%;
             width: 40px;
             height: 40px;
             font-size: 18px;
@@ -165,10 +220,17 @@ const (
 </head>
 <body>
 
+<nav class="navbar">
+    <div href="#" class="navbar-brand">🪼 Goloom</div>
+    <div class="navbar-links">
+        <a href="/web/config/dir/"><i class="fas fa-home"></i>Config</a>
+    </div>
+</nav>
+
 <div class="container">
     <button class="refresh-button" onclick="window.location.reload()">↻</button>
-    <h1>Goloom</h1>
-	<h3 style="color:gray">Updated at: %s</h3>
+    <h1>🫧 Services</h1>
+	<h3 style="color:gray">Updated at: {{ .time }}</h3>
     <table>
         <thead>
             <tr>
@@ -177,38 +239,37 @@ const (
             </tr>
         </thead>
         <tbody>
-			%s
+			{{range .states}}
+				{{ if eq .Status 200 }}
+					<tr>
+						<td>{{ .Service }}</td>
+						<td><span class="status up">OK</span></td>
+					</tr>
+				{{else}}
+					<tr>
+						<td>{{ .Service }}</td>
+						<td><span class="status down">DOWN</span></td>
+					</tr>
+        		{{end}}
+    		{{end}}
         </tbody>
     </table>
 </div>
 
+ <script>
+        setInterval(async function() {
+             window.location.reload()
+        }, 10_000);
+    </script>
 </body>
 </html>`
 )
 
-func NewStatePage(ctx context.Context, states []models.ServiceState) (string, error) {
-	var sb strings.Builder
-
-	for _, state := range states {
-		switch state.Status {
-		case http.StatusOK:
-			sb.WriteString(fmt.Sprintf(`
-			<tr>
-				<td>%s</td>
-				<td><span class="status up">OK</span></td>
-			</tr>
-		`, state.Service))
-		default:
-			sb.WriteString(fmt.Sprintf(`
-			<tr>
-				<td>%s</td>
-				<td><span class="status down">DOWN</span></td>
-			</tr>
-		`, state.Service))
-		}
+func newStatePage() *template.Template {
+	page, err := template.New("state").Parse(statePage)
+	if err != nil {
+		panic("failed to generate page: " + err.Error())
 	}
 
-	page := fmt.Sprintf(statePage, time.Now().Format("2006-01-02 15:04:05"), sb.String())
-
-	return page, nil
+	return page
 }
