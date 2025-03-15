@@ -1,4 +1,0 @@
-db:
-    port: 5000
-    user: admin
-    password: 123
