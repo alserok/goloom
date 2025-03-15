@@ -3,6 +3,7 @@ package health_state
 import (
 	"context"
 	"fmt"
+	"github.com/alserok/goloom/internal/broadcaster"
 	"github.com/alserok/goloom/internal/service"
 	"github.com/alserok/goloom/internal/service/models"
 	"github.com/alserok/goloom/pkg/logger"
@@ -14,12 +15,13 @@ const (
 	healthRoute = "health"
 )
 
-func New(targets []string, tickPeriod time.Duration, srvc service.StatusService) *worker {
+func New(broadcaster broadcaster.Broadcaster, targets []string, tickPeriod time.Duration, srvc service.StatusService) *worker {
 	return &worker{
-		tickPeriod: tickPeriod,
-		targets:    targets,
-		cl:         http.DefaultClient,
-		srvc:       srvc,
+		tickPeriod:  tickPeriod,
+		targets:     targets,
+		cl:          http.DefaultClient,
+		srvc:        srvc,
+		broadcaster: broadcaster,
 	}
 }
 
@@ -31,6 +33,8 @@ type worker struct {
 	srvc service.StatusService
 
 	cl *http.Client
+
+	broadcaster broadcaster.Broadcaster
 }
 
 func (w *worker) Start(ctx context.Context) {
@@ -38,6 +42,9 @@ func (w *worker) Start(ctx context.Context) {
 	defer tick.Stop()
 
 	log := logger.UnwrapLogger(ctx)
+
+	log.Info("starting 'health state' worker ✳️")
+	defer log.Info("closing 'health state' worker ✳️")
 
 	for {
 		select {
@@ -55,9 +62,13 @@ func (w *worker) Start(ctx context.Context) {
 
 				res, err := w.cl.Do(req)
 				if err != nil {
+					_ = w.broadcaster.RemoveTarget(ctx, target)
+
 					status = http.StatusInternalServerError
 					failedReqs = append(failedReqs, target)
 				} else {
+					_ = w.broadcaster.AddTarget(ctx, target)
+
 					status = res.StatusCode
 					succeededReqs = append(succeededReqs, target)
 				}

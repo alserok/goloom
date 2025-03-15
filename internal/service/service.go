@@ -33,10 +33,11 @@ type StatusService interface {
 	GetStatusesPage(ctx context.Context) ([]byte, error)
 }
 
-func New(repo storage.Storage, pagesConstructor pages.HTMLConstructor) Service {
+func New(repo storage.Storage, pagesConstructor pages.HTMLConstructor, broadcaster broadcaster.Broadcaster) Service {
 	return &service{
 		repo:             repo,
 		pagesConstructor: pagesConstructor,
+		broadcaster:      broadcaster,
 	}
 }
 
