@@ -11,6 +11,7 @@ import (
 	"github.com/alserok/goloom/static/pages"
 	"gopkg.in/yaml.v3"
 	"os"
+	p "path"
 	"strings"
 	"time"
 )
@@ -96,34 +97,39 @@ func (s service) GetConfigPage(ctx context.Context, path string) ([]byte, error)
 	}
 
 	var content []byte
-	switch {
-	case strings.HasSuffix(path, ".json"):
-		var cfg models.Config
+	if len(content) > 0 {
+		switch {
+		case strings.HasSuffix(path, ".json"):
+			var cfg models.Config
 
-		if err = json.Unmarshal(file, &cfg); err != nil {
-			return nil, utils.NewError(err.Error(), utils.ErrInternal)
-		}
+			if err = json.Unmarshal(file, &cfg); err != nil {
+				return nil, utils.NewError(err.Error(), utils.ErrInternal)
+			}
 
-		content, err = json.MarshalIndent(cfg, " ", " ")
-		if err != nil {
-			return nil, utils.NewError(err.Error(), utils.ErrInternal)
-		}
-	case strings.HasSuffix(path, ".yaml"), strings.HasSuffix(path, ".yml"):
-		var cfg models.Config
+			content, err = json.MarshalIndent(cfg, " ", " ")
+			if err != nil {
+				return nil, utils.NewError(err.Error(), utils.ErrInternal)
+			}
+		case strings.HasSuffix(path, ".yaml"), strings.HasSuffix(path, ".yml"):
+			var cfg models.Config
 
-		if err = yaml.Unmarshal(file, &cfg); err != nil {
-			return nil, utils.NewError(err.Error(), utils.ErrInternal)
-		}
+			if err = yaml.Unmarshal(file, &cfg); err != nil {
+				return nil, utils.NewError(err.Error(), utils.ErrInternal)
+			}
 
-		content, err = yaml.Marshal(cfg)
-		if err != nil {
-			return nil, utils.NewError(err.Error(), utils.ErrInternal)
+			content, err = yaml.Marshal(cfg)
+			if err != nil {
+				return nil, utils.NewError(err.Error(), utils.ErrInternal)
+			}
 		}
 	}
 
+	_, filename := p.Split(path)
+
 	data := pages.Data{
-		"content": string(content),
-		"path":    path,
+		"content":  string(content),
+		"path":     path,
+		"filename": filename,
 	}
 
 	page, err := s.pagesConstructor.Render(pages.PageConfig, data)

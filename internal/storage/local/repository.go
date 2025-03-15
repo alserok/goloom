@@ -51,11 +51,11 @@ func (r *repository) GetStatuses(ctx context.Context) ([]models.ServiceState, er
 func (r *repository) SaveFile(ctx context.Context, path string, data []byte) error {
 	f, err := os.OpenFile(fmt.Sprintf("%s/%s", r.dir, path), os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0777)
 	if err != nil {
-		// TODO
+		return utils.NewError(err.Error(), utils.ErrInternal)
 	}
 
 	if _, err = f.Write(data); err != nil {
-		// TODO
+		return utils.NewError(err.Error(), utils.ErrInternal)
 	}
 
 	return nil
@@ -63,7 +63,7 @@ func (r *repository) SaveFile(ctx context.Context, path string, data []byte) err
 
 func (r *repository) DeleteFile(ctx context.Context, path string) error {
 	if err := os.Remove(fmt.Sprintf("%s/%s", r.dir, path)); err != nil {
-		// TODO
+		return utils.NewError(err.Error(), utils.ErrInternal)
 	}
 
 	return nil

@@ -222,8 +222,8 @@ var (
 </nav>
 
 <div class="container">
-    <button class="back-button" onclick="goBack()">Home</button>
-    <h1>Config</h1>
+    <button class="back-button" onclick="goBack()">Back</button>
+    <h1>{{ .filename }}</h1>
     <textarea id="editor" spellcheck="false"></textarea>
 	<button id="delete-button" class="delete-button">Delete</button>
     <button id="save-button" class="save-button">Save</button>
@@ -246,7 +246,17 @@ var (
     });
 
     function goBack() {
-      window.location.href = "/web/config/dir";
+		const fallbackUrl = "/web/config/dir/"; // Fallback URL
+		const currentPath = window.location.pathname;
+	
+		const modifiedPath = currentPath.replace("/web/config/file", "/web/config/dir");
+	
+		const normalizedPath = modifiedPath.endsWith("/") ? modifiedPath.slice(0, -1) : modifiedPath;
+	
+		const pathParts = normalizedPath.split("/");
+		const parentPath = pathParts.slice(0, -1).join("/") || fallbackUrl;
+	
+		window.location.href = parentPath;
     }
 
     saveButton.addEventListener('click', async () => {
