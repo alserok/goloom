@@ -27,10 +27,11 @@ func MustStart(cfg *config.Config) {
 
 	log.Info("starting goloom 🚧", logger.WithArg("port", cfg.Port))
 
-	log.Info("initial config", logger.WithArg("services", cfg.State.Services), logger.WithArg("check period", cfg.State.CheckPeriod))
+	log.Info("initial config", logger.WithArg("check period", cfg.ServicesCheckPeriod))
 
 	// entity in response of notifying all services about change
 	broadcaster := broadcaster.New()
+
 	// entity in response of building html pages for web interface
 	pagesConstructor := pages.NewConstructor()
 
@@ -42,7 +43,7 @@ func MustStart(cfg *config.Config) {
 
 	// launches workers
 	launcher := workers.NewLauncher(log,
-		state.New(broadcaster, cfg.State.Services, cfg.State.CheckPeriod, srvc),
+		state.New(cfg.ServicesCheckPeriod, broadcaster, srvc),
 		stats.New(),
 	)
 	defer launcher.Stop()

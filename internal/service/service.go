@@ -18,20 +18,27 @@ import (
 
 type Service interface {
 	ConfigService
-	StatusService
+	PageService
+	ServicesService
+}
+
+type ServicesService interface {
+	AddService(ctx context.Context, addr string) error
+	RemoveService(ctx context.Context, addr string) error
+	UpdateServiceStatus(ctx context.Context, data models.ServiceState) error
+	GetServices(ctx context.Context) ([]models.ServiceState, error)
+}
+
+type PageService interface {
+	GetConfigPage(ctx context.Context, path string) ([]byte, error)
+	GetDirPage(ctx context.Context, path string) ([]byte, error)
+	GetStatusesPage(ctx context.Context) ([]byte, error)
 }
 
 type ConfigService interface {
-	GetConfigPage(ctx context.Context, path string) ([]byte, error)
-	GetDirPage(ctx context.Context, path string) ([]byte, error)
 	UpdateConfig(ctx context.Context, path string, content string) error
 	CreateConfig(ctx context.Context, path string, cfg models.Config) error
 	DeleteConfig(ctx context.Context, path string) error
-}
-
-type StatusService interface {
-	UpdateStatus(ctx context.Context, data models.ServiceState) error
-	GetStatusesPage(ctx context.Context) ([]byte, error)
 }
 
 func New(repo storage.Storage, pagesConstructor pages.HTMLConstructor, broadcaster broadcaster.Broadcaster) Service {
@@ -48,6 +55,31 @@ type service struct {
 	pagesConstructor pages.HTMLConstructor
 
 	broadcaster broadcaster.Broadcaster
+}
+
+func (s service) GetServices(ctx context.Context) ([]models.ServiceState, error) {
+	info, err := s.repo.GetServicesInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get statuses: %w", err)
+	}
+
+	return info, nil
+}
+
+func (s service) AddService(ctx context.Context, addr string) error {
+	if err := s.repo.AddService(ctx, addr); err != nil {
+		return fmt.Errorf("failed to add service: %w", err)
+	}
+
+	return nil
+}
+
+func (s service) RemoveService(ctx context.Context, addr string) error {
+	if err := s.repo.RemoveService(ctx, addr); err != nil {
+		return fmt.Errorf("failed to remove service: %w", err)
+	}
+
+	return nil
 }
 
 func (s service) GetDirPage(ctx context.Context, path string) ([]byte, error) {
@@ -82,22 +114,20 @@ func (s service) GetDirPage(ctx context.Context, path string) ([]byte, error) {
 
 	page, err := s.pagesConstructor.Render(pages.PageDir, data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate state page: %w", err)
+		return nil, fmt.Errorf("failed to generate dir page: %w", err)
 	}
 
 	return page, nil
 }
 
 func (s service) GetConfigPage(ctx context.Context, path string) ([]byte, error) {
-	absPath := fmt.Sprintf("./data/%s", path)
-
-	file, err := s.repo.GetFile(ctx, absPath)
+	file, err := s.repo.GetFile(ctx, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file: %w", err)
 	}
 
 	var content []byte
-	if len(content) > 0 {
+	if len(file) > 0 {
 		switch {
 		case strings.HasSuffix(path, ".json"):
 			var cfg models.Config
@@ -134,7 +164,7 @@ func (s service) GetConfigPage(ctx context.Context, path string) ([]byte, error)
 
 	page, err := s.pagesConstructor.Render(pages.PageConfig, data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate state page: %w", err)
+		return nil, fmt.Errorf("failed to generate config page: %w", err)
 	}
 
 	return page, nil
@@ -145,7 +175,12 @@ func (s service) UpdateConfig(ctx context.Context, path string, content string) 
 		return fmt.Errorf("failed to save file: %w", err)
 	}
 
-	if err := s.broadcaster.Broadcast(ctx, content); err != nil {
+	cfg, err := s.repo.GetFile(ctx, path)
+	if err != nil {
+		return fmt.Errorf("failed to get file: %w", err)
+	}
+
+	if err = s.broadcaster.Broadcast(ctx, broadcaster.Body{"path": path, "contentBytes": cfg}); err != nil {
 		return utils.NewError(err.Error(), utils.ErrInternal)
 	}
 
@@ -173,8 +208,8 @@ func (s service) DeleteConfig(ctx context.Context, path string) error {
 	return nil
 }
 
-func (s service) UpdateStatus(ctx context.Context, data models.ServiceState) error {
-	if err := s.repo.UpdateStatus(ctx, data); err != nil {
+func (s service) UpdateServiceStatus(ctx context.Context, data models.ServiceState) error {
+	if err := s.repo.UpdateServiceStatus(ctx, data); err != nil {
 		return fmt.Errorf("failed to update status: %w", err)
 	}
 
@@ -182,13 +217,13 @@ func (s service) UpdateStatus(ctx context.Context, data models.ServiceState) err
 }
 
 func (s service) GetStatusesPage(ctx context.Context) ([]byte, error) {
-	states, err := s.repo.GetStatuses(ctx)
+	statesInfo, err := s.repo.GetServicesInfo(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get statuses: %w", err)
 	}
 
 	data := pages.Data{
-		"states": states,
+		"states": statesInfo,
 		"time":   time.Now().Format("2006-01-02 15:04:05"),
 	}
 

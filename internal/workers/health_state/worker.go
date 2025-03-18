@@ -15,10 +15,9 @@ const (
 	healthRoute = "health"
 )
 
-func New(broadcaster broadcaster.Broadcaster, targets []string, tickPeriod time.Duration, srvc service.StatusService) *worker {
+func New(tickPeriod time.Duration, broadcaster broadcaster.Broadcaster, srvc service.ServicesService) *worker {
 	return &worker{
 		tickPeriod:  tickPeriod,
-		targets:     targets,
 		cl:          http.DefaultClient,
 		srvc:        srvc,
 		broadcaster: broadcaster,
@@ -28,9 +27,7 @@ func New(broadcaster broadcaster.Broadcaster, targets []string, tickPeriod time.
 type worker struct {
 	tickPeriod time.Duration
 
-	targets []string
-
-	srvc service.StatusService
+	srvc service.ServicesService
 
 	cl *http.Client
 
@@ -51,8 +48,14 @@ func (w *worker) Start(ctx context.Context) {
 		case <-tick.C:
 			var failedReqs, succeededReqs []string
 
-			for _, target := range w.targets {
-				req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/%s", target, healthRoute), nil)
+			services, err := w.srvc.GetServices(context.TODO())
+			if err != nil {
+				log.Error("failed to get statuses", logger.WithArg("error", err.Error()))
+				continue
+			}
+
+			for _, srvc := range services {
+				req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/%s", srvc.Addr, healthRoute), nil)
 				if err != nil {
 					log.Error("failed to init request", logger.WithArg("error", err.Error()))
 					continue
@@ -62,20 +65,20 @@ func (w *worker) Start(ctx context.Context) {
 
 				res, err := w.cl.Do(req)
 				if err != nil {
-					_ = w.broadcaster.RemoveTarget(ctx, target)
+					w.broadcaster.RemoveTarget(ctx, srvc.Addr)
 
 					status = http.StatusInternalServerError
-					failedReqs = append(failedReqs, target)
+					failedReqs = append(failedReqs, srvc.Addr)
 				} else {
-					_ = w.broadcaster.AddTarget(ctx, target)
+					w.broadcaster.AddTargets(ctx, srvc.Addr)
 
 					status = res.StatusCode
-					succeededReqs = append(succeededReqs, target)
+					succeededReqs = append(succeededReqs, srvc.Addr)
 				}
 
-				if err = w.srvc.UpdateStatus(context.Background(), models.ServiceState{
-					Service: target,
-					Status:  status,
+				if err = w.srvc.UpdateServiceStatus(context.Background(), models.ServiceState{
+					Addr:   srvc.Addr,
+					Status: status,
 				}); err != nil {
 					log.Error("failed to update status", logger.WithArg("error", err.Error()))
 					continue
@@ -83,7 +86,7 @@ func (w *worker) Start(ctx context.Context) {
 			}
 
 			log.Info("worker checked states 🛠️",
-				logger.WithArg("services", len(w.targets)),
+				logger.WithArg("services", len(services)),
 				logger.WithArg("succeeded", succeededReqs),
 				logger.WithArg("failed", failedReqs),
 			)

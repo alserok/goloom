@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/alserok/goloom/internal/utils"
 	"net/http"
 	"sync"
@@ -11,12 +12,15 @@ import (
 
 type Broadcaster interface {
 	Broadcast(ctx context.Context, data any) error
-	AddTarget(ctx context.Context, target string) error
-	RemoveTarget(ctx context.Context, target string) error
+	AddTargets(ctx context.Context, target ...string)
+	RemoveTarget(ctx context.Context, target string)
 }
 
 func New() Broadcaster {
-	return &broadcaster{}
+	return &broadcaster{
+		targets: make(map[string]struct{}),
+		cl:      http.DefaultClient,
+	}
 }
 
 type broadcaster struct {
@@ -36,32 +40,29 @@ func (b *broadcaster) Broadcast(ctx context.Context, data any) error {
 	defer b.mu.RUnlock()
 
 	for srvc, _ := range b.targets {
-		req, err := http.NewRequest(http.MethodPost, srvc, bytes.NewReader(body))
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/provide", srvc), bytes.NewReader(body))
 		if err != nil {
 			return utils.NewError(err.Error(), utils.ErrInternal)
 		}
 
-		_, err = b.cl.Do(req)
-		if err != nil {
-			return utils.NewError(err.Error(), utils.ErrInternal)
-		}
+		_, _ = b.cl.Do(req)
 	}
 
 	return nil
 }
 
-func (b *broadcaster) AddTarget(ctx context.Context, target string) error {
+func (b *broadcaster) AddTargets(ctx context.Context, targets ...string) {
 	b.mu.Lock()
-	b.targets[target] = struct{}{}
+	for _, target := range targets {
+		b.targets[target] = struct{}{}
+	}
 	b.mu.Unlock()
-
-	return nil
 }
 
-func (b *broadcaster) RemoveTarget(ctx context.Context, target string) error {
+func (b *broadcaster) RemoveTarget(ctx context.Context, target string) {
 	b.mu.Lock()
 	delete(b.targets, target)
 	b.mu.Unlock()
-
-	return nil
 }
+
+type Body map[string]any

@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strings"
 	"time"
 )
 
@@ -13,10 +12,8 @@ type Config struct {
 	Storage struct {
 		Dir string
 	}
-	State struct {
-		CheckPeriod time.Duration
-		Services    []string
-	}
+
+	ServicesCheckPeriod time.Duration
 }
 
 func MustLoad() *Config {
@@ -27,16 +24,14 @@ func MustLoad() *Config {
 
 	cfg.Storage.Dir = os.Getenv("DIR")
 
-	if servicesEnv := os.Getenv("SERVICES"); servicesEnv != "" {
-		cfg.State.Services = strings.Split(servicesEnv, ",")
-
-		checkPeriod, err := time.ParseDuration(os.Getenv("CHECK_PERIOD"))
-		if err == nil {
-			cfg.State.CheckPeriod = checkPeriod
-		} else {
-
-		}
+	cfg.ServicesCheckPeriod = defaultServicesCheckPeriod
+	if checkperiod, err := time.ParseDuration(os.Getenv("SERVICES_CHECK_PERIOD")); err == nil {
+		cfg.ServicesCheckPeriod = checkperiod
 	}
 
 	return &cfg
 }
+
+const (
+	defaultServicesCheckPeriod = time.Minute
+)

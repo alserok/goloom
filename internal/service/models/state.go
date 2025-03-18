@@ -1,6 +1,6 @@
 package models
 
 type ServiceState struct {
-	Service string `json:"service"`
-	Status  int    `json:"status"`
+	Addr   string `json:"addr"`
+	Status int    `json:"status"`
 }

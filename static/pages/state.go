@@ -145,7 +145,6 @@ const (
             display: inline-block;
             text-align: center;
             font-size: 14px;
-			width: 4vw;
         }
 
         .status.up {
@@ -155,6 +154,11 @@ const (
 
         .status.down {
             background-color: #dc3545; /* Red for "down" status */
+            color: white;
+        }
+
+        .status.unknown {
+            background-color: gray; /* Red for "down" status */
             color: white;
         }
 
@@ -234,7 +238,7 @@ const (
     <table>
         <thead>
             <tr>
-                <th>Service</th>
+                <th>Addr</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -242,13 +246,23 @@ const (
 			{{range .states}}
 				{{ if eq .Status 200 }}
 					<tr>
-						<td>{{ .Service }}</td>
+						<td>{{ .Addr }}</td>
 						<td><span class="status up">OK</span></td>
+					</tr>
+				{{else if eq .Status 400}}
+					<tr>
+						<td>{{ .Addr }}</td>
+						<td><span class="status down">DOWN</span></td>
+					</tr>
+				{{else if eq .Status 500}}
+					<tr>
+						<td>{{ .Addr }}</td>
+						<td><span class="status down">DOWN</span></td>
 					</tr>
 				{{else}}
 					<tr>
-						<td>{{ .Service }}</td>
-						<td><span class="status down">DOWN</span></td>
+						<td>{{ .Addr }}</td>
+						<td><span class="status unknown">Unknown</span></td>
 					</tr>
         		{{end}}
     		{{end}}
