@@ -7,7 +7,7 @@ import (
 
 type Storage interface {
 	FileStorage
-	StateStorage
+	ServicesStorage
 }
 
 type FileStorage interface {
@@ -16,7 +16,9 @@ type FileStorage interface {
 	GetFile(ctx context.Context, path string) ([]byte, error)
 }
 
-type StateStorage interface {
-	UpdateStatus(ctx context.Context, data models.ServiceState) error
-	GetStatuses(ctx context.Context) ([]models.ServiceState, error)
+type ServicesStorage interface {
+	UpdateServiceStatus(ctx context.Context, data models.ServiceState) error
+	GetServicesInfo(ctx context.Context) ([]models.ServiceState, error)
+	RemoveService(ctx context.Context, addr string) error
+	AddService(ctx context.Context, addr string) error
 }

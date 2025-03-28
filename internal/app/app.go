@@ -3,18 +3,20 @@ package app
 import (
 	"context"
 	"fmt"
+	"os/signal"
+	"syscall"
+
 	"github.com/alserok/goloom/internal/broadcaster"
 	"github.com/alserok/goloom/internal/config"
 	"github.com/alserok/goloom/internal/server"
 	"github.com/alserok/goloom/internal/service"
 	"github.com/alserok/goloom/internal/storage/local"
+	"github.com/alserok/goloom/pkg/logger"
+	"github.com/alserok/goloom/static/pages"
+
 	"github.com/alserok/goloom/internal/workers"
 	state "github.com/alserok/goloom/internal/workers/health_state"
 	"github.com/alserok/goloom/internal/workers/stats"
-	"github.com/alserok/goloom/pkg/logger"
-	"github.com/alserok/goloom/static/pages"
-	"os/signal"
-	"syscall"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -27,14 +29,15 @@ func MustStart(cfg *config.Config) {
 
 	log.Info("starting goloom 🚧", logger.WithArg("port", cfg.Port))
 
-	log.Info("initial config", logger.WithArg("services", cfg.State.Services), logger.WithArg("check period", cfg.State.CheckPeriod))
+	log.Info("initial config", logger.WithArg("check period", cfg.ServicesCheckPeriod))
 
 	// entity in response of notifying all services about change
 	broadcaster := broadcaster.New()
+
 	// entity in response of building html pages for web interface
 	pagesConstructor := pages.NewConstructor()
 
-	repo := local.NewRepository(local.MustSetup(cfg.Storage.Dir))
+	repo := local.NewRepository(local.MustSetup(cfg.Storage.RootDir, cfg.Storage.Dirs))
 	srvc := service.New(repo, pagesConstructor, broadcaster)
 	serv := server.New(server.HTTP, srvc, log)
 
@@ -42,7 +45,7 @@ func MustStart(cfg *config.Config) {
 
 	// launches workers
 	launcher := workers.NewLauncher(log,
-		state.New(broadcaster, cfg.State.Services, cfg.State.CheckPeriod, srvc),
+		state.New(cfg.ServicesCheckPeriod, broadcaster, srvc),
 		stats.New(),
 	)
 	defer launcher.Stop()

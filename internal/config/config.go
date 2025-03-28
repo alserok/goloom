@@ -11,12 +11,11 @@ type Config struct {
 	Port string
 
 	Storage struct {
-		Dir string
+		RootDir string
+		Dirs    []string
 	}
-	State struct {
-		CheckPeriod time.Duration
-		Services    []string
-	}
+
+	ServicesCheckPeriod time.Duration
 }
 
 func MustLoad() *Config {
@@ -25,18 +24,17 @@ func MustLoad() *Config {
 	cfg.Env = os.Getenv("ENV")
 	cfg.Port = os.Getenv("PORT")
 
-	cfg.Storage.Dir = os.Getenv("DIR")
+	cfg.Storage.RootDir = os.Getenv("ROOT_DIR")
+	cfg.Storage.Dirs = strings.Split(os.Getenv("DIRS"), ";")
 
-	if servicesEnv := os.Getenv("SERVICES"); servicesEnv != "" {
-		cfg.State.Services = strings.Split(servicesEnv, ",")
-
-		checkPeriod, err := time.ParseDuration(os.Getenv("CHECK_PERIOD"))
-		if err == nil {
-			cfg.State.CheckPeriod = checkPeriod
-		} else {
-
-		}
+	cfg.ServicesCheckPeriod = defaultServicesCheckPeriod
+	if checkperiod, err := time.ParseDuration(os.Getenv("SERVICES_CHECK_PERIOD")); err == nil {
+		cfg.ServicesCheckPeriod = checkperiod
 	}
 
 	return &cfg
 }
+
+const (
+	defaultServicesCheckPeriod = time.Minute
+)

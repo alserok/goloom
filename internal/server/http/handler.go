@@ -6,18 +6,67 @@ import (
 	"github.com/alserok/goloom/internal/service"
 	"github.com/alserok/goloom/internal/service/models"
 	"github.com/alserok/goloom/internal/utils"
+	"net"
 	"net/http"
 	"strings"
 )
 
 func newHandler(srvc service.Service) *handler {
 	return &handler{
-		srvc: srvc,
+		service: services{
+			services: srvc,
+			pages:    srvc,
+			config:   srvc,
+		},
 	}
 }
 
 type handler struct {
-	srvc service.Service
+	service services
+}
+
+type services struct {
+	services service.ServicesService
+	pages    service.PageService
+	config   service.ConfigService
+}
+
+func (h *handler) AddService(w http.ResponseWriter, r *http.Request) error {
+	host, port, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return utils.NewError(err.Error(), utils.ErrInternal)
+	}
+
+	if queryPort := r.URL.Query().Get("port"); port != "" {
+		port = queryPort
+	}
+
+	addr := fmt.Sprintf("%s:%s", host, port)
+
+	if err := h.service.services.AddService(r.Context(), addr); err != nil {
+		return fmt.Errorf("service failed to add service: %w", err)
+	}
+
+	return nil
+}
+
+func (h *handler) RemoveService(w http.ResponseWriter, r *http.Request) error {
+	host, port, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return utils.NewError(err.Error(), utils.ErrInternal)
+	}
+
+	if queryPort := r.URL.Query().Get("port"); port != "" {
+		port = queryPort
+	}
+
+	addr := fmt.Sprintf("%s:%s", host, port)
+
+	if err := h.service.services.RemoveService(r.Context(), addr); err != nil {
+		return fmt.Errorf("service failed to remove service: %w", err)
+	}
+
+	return nil
 }
 
 func (h *handler) UpdateConfig(w http.ResponseWriter, r *http.Request) error {
@@ -28,7 +77,7 @@ func (h *handler) UpdateConfig(w http.ResponseWriter, r *http.Request) error {
 
 	path := strings.TrimPrefix(r.URL.Path, "/config/update")
 
-	if err := h.srvc.UpdateConfig(r.Context(), path, req.Content); err != nil {
+	if err := h.service.config.UpdateConfig(r.Context(), path, req.Content); err != nil {
 		return fmt.Errorf("service failed to update config: %w", err)
 	}
 
@@ -37,7 +86,7 @@ func (h *handler) UpdateConfig(w http.ResponseWriter, r *http.Request) error {
 func (h *handler) GetConfig(w http.ResponseWriter, r *http.Request) error {
 	path := r.PathValue("path")
 
-	cfg, err := h.srvc.GetConfigPage(r.Context(), path)
+	cfg, err := h.service.pages.GetConfigPage(r.Context(), path)
 	if err != nil {
 		return fmt.Errorf("service failed to delete config: %w", err)
 	}
@@ -52,7 +101,7 @@ func (h *handler) GetConfig(w http.ResponseWriter, r *http.Request) error {
 func (h *handler) DeleteConfig(w http.ResponseWriter, r *http.Request) error {
 	path := strings.TrimPrefix(r.URL.Path, "/config/delete")
 
-	err := h.srvc.DeleteConfig(r.Context(), path)
+	err := h.service.config.DeleteConfig(r.Context(), path)
 	if err != nil {
 		return fmt.Errorf("service failed to delete config: %w", err)
 	}
@@ -63,7 +112,7 @@ func (h *handler) DeleteConfig(w http.ResponseWriter, r *http.Request) error {
 func (h *handler) GetDirPage(w http.ResponseWriter, r *http.Request) error {
 	path := strings.TrimPrefix(r.URL.Path, "/web/config/dir/")
 
-	page, err := h.srvc.GetDirPage(r.Context(), path)
+	page, err := h.service.pages.GetDirPage(r.Context(), path)
 	if err != nil {
 		return fmt.Errorf("service failed to get config: %w", err)
 	}
@@ -78,7 +127,7 @@ func (h *handler) GetDirPage(w http.ResponseWriter, r *http.Request) error {
 func (h *handler) GetConfigPage(w http.ResponseWriter, r *http.Request) error {
 	path := strings.TrimPrefix(r.URL.Path, "/web/config/file/")
 
-	page, err := h.srvc.GetConfigPage(r.Context(), path)
+	page, err := h.service.pages.GetConfigPage(r.Context(), path)
 	if err != nil {
 		return fmt.Errorf("service failed to get config: %w", err)
 	}
@@ -91,7 +140,7 @@ func (h *handler) GetConfigPage(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *handler) GetStatePage(w http.ResponseWriter, r *http.Request) error {
-	page, err := h.srvc.GetStatusesPage(r.Context())
+	page, err := h.service.pages.GetStatusesPage(r.Context())
 	if err != nil {
 		return fmt.Errorf("service failed to get statuses: %w", err)
 	}

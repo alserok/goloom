@@ -13,6 +13,9 @@ func setupRoutes(mux *http.ServeMux, s *http.Server, h *handler, log logger.Logg
 	mux.HandleFunc("DELETE /config/delete/", middleware.WithErrorHandler(h.DeleteConfig))
 	mux.HandleFunc("GET /config/get/", middleware.WithErrorHandler(h.GetConfig))
 
+	mux.HandleFunc("POST /service/add", middleware.WithErrorHandler(h.AddService))
+	mux.HandleFunc("DELETE /service/remove", middleware.WithErrorHandler(h.RemoveService))
+
 	mux.HandleFunc("GET /web/config/file/", middleware.WithErrorHandler(h.GetConfigPage))
 	mux.HandleFunc("GET /web/config/dir/", middleware.WithErrorHandler(h.GetDirPage))
 	mux.HandleFunc("GET /web/state", middleware.WithErrorHandler(h.GetStatePage))
