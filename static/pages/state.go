@@ -47,7 +47,7 @@ const (
         }
 
         /* Navbar links */
-.navbar-links {
+		.navbar-links {
             display: flex;
             gap: 20px; /* Space between links */
         }
@@ -91,7 +91,6 @@ const (
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
             padding: 24px;
             width: 90%%;
-            max-width: 800px;
             position: relative; /* For positioning the refresh button */
         }
 
@@ -197,7 +196,6 @@ const (
             }
         }
 
-        /* Responsive design */
         @media (max-width: 600px) {
             .container {
                 width: 95%%;
