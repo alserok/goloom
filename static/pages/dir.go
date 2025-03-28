@@ -115,8 +115,17 @@ const (
 
     .item .type {
       color: #888;
+      font-style: italic;
       font-size: 14px;
-      margin-left: 10px;
+	  font-weight: bold;
+      margin-left: 25px;
+    }
+
+    .item .size {
+      color: white;
+      font-size: 14px;
+	  font-weight: bold;
+      margin-left: 15px;
     }
 
     /* Back Button Styles */
@@ -185,17 +194,22 @@ const (
         const div = document.createElement("div");
         div.className = "item";
 
-        const link = value ? '/web/config/dir/' + {{ .path }} + "/" + key : '/web/config/file/' + {{ .path }} + "/" + key;
+        const link = value.is_dir ? '/web/config/dir/' + {{ .path }} + "/" + value.name : '/web/config/file/' + {{ .path }} + "/" + value.name;
 
         const anchor = document.createElement("a");
         anchor.href = link;
-        anchor.textContent = value ? key : key.split('.').slice(0, -1);
+        anchor.textContent = value.is_dir ? value.name : value.name.split('.').slice(0, -1);
+
+        const size = document.createElement("span");
+        size.className = "size";
+        size.textContent = value.size;
 
         const type = document.createElement("span");
         type.className = "type";
-        type.textContent = value ? '📁' : (key.includes('.') ? key.split('.').pop() : '') + ' 📃';
+        type.textContent = value.is_dir ? '📁' : (value.name.includes('.') ? value.name.split('.').pop() : '') + ' 📃';
 
         div.appendChild(anchor);
+        div.appendChild(size);
         div.appendChild(type);
 
         content.appendChild(div);

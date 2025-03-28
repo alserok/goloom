@@ -7,7 +7,13 @@ type UpdateConfigReq struct {
 }
 
 type Dir struct {
-	Path    string          `json:"path"`
-	Name    string          `json:"name"`
-	Content map[string]bool `json:"content"`
+	Path    string    `json:"path"`
+	Name    string    `json:"name"`
+	Content []Content `json:"content"`
+}
+
+type Content struct {
+	IsDir bool   `json:"is_dir"`
+	Name  string `json:"name"`
+	Size  string `json:"size"`
 }

@@ -16,7 +16,7 @@
 
 *Change your `json`, `yaml` and `yml` files online and your services will be notified about the changes*
 
-![img.png](images/img3.png)
+![img.png](images/img2.png)
 
 
 ## Simple setup
