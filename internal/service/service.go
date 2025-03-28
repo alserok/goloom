@@ -91,9 +91,8 @@ func (s service) GetDirPage(ctx context.Context, path string) ([]byte, error) {
 	}
 
 	dir := models.Dir{
-		Path:    path,
-		Name:    info.Name(),
-		Content: make(map[string]bool),
+		Path: path,
+		Name: info.Name(),
 	}
 
 	if info.IsDir() {
@@ -103,7 +102,20 @@ func (s service) GetDirPage(ctx context.Context, path string) ([]byte, error) {
 		}
 
 		for _, entry := range entries {
-			dir.Content[entry.Name()] = entry.IsDir()
+			content := models.Content{
+				IsDir: entry.IsDir(),
+				Name:  entry.Name(),
+			}
+
+			if content.IsDir {
+				size := utils.CountSize(fmt.Sprintf("%s/%s", absPath, entry.Name()))
+				content.Size = utils.PrettifySize(size)
+			} else {
+				entryInfo, _ := entry.Info()
+				content.Size = utils.PrettifySize(entryInfo.Size())
+			}
+
+			dir.Content = append(dir.Content, content)
 		}
 	}
 
