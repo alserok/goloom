@@ -21,7 +21,7 @@
 
 ## Simple setup
 
-### Your app should provide `GET /health` and `POST /provide` routes. 
+### If you are not using sdk, your app should provide `GET /health` and `POST /provide` routes. 
 1. The first one will let `goloom` know if app is alive and should it be 
 provided with file updates or not.
 2. The second one will let `goloom` make requests with data updates
@@ -82,7 +82,7 @@ func main() {
 	})
 
 	// Goloom sends file updates by this route
-	mux.HandleFunc("/update", func(writer http.ResponseWriter, request *http.Request) {
+	mux.HandleFunc("/provide", func(writer http.ResponseWriter, request *http.Request) {
 		var cfg Config
 		json.NewDecoder(request.Body).Decode(&cfg)
 
