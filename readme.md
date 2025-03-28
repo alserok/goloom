@@ -40,7 +40,7 @@ Body that you will receive
 }
 ```
 
-### To add and remove your app in `goloom` services use 
+### To add and remove your app
     
 `Post` request    
 
@@ -50,23 +50,31 @@ Body that you will receive
 
     http://${goloom_host}:${goloom_port}/service/remove?port={$app_port}
 
+### Compose file example
+
 ```yaml
 version: '3.8'
 
 services:
   goloom:
     image: goloom
+    build:
+      context: .
     ports:
       - '6070:6070'
     environment:
       PORT: 6070
-      DIR: './data'
+      ROOT_DIR: './data'
+      # DIRS: "service1/db/mysql;service1/cache;service3"  optional, creates folders
       CHECK_PERIOD: '3s'
+      ENV: 'DEV'
 ```
 
-## Goloom Configuration
-
-### Via webpage
+## Import files
 
 ### Via terminal
+
+To import your config files via terminal you may use
+
+    docker cp config.yaml goloom:/goloom/${ROOT_DIR}
 

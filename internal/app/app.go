@@ -3,18 +3,20 @@ package app
 import (
 	"context"
 	"fmt"
+	"os/signal"
+	"syscall"
+
 	"github.com/alserok/goloom/internal/broadcaster"
 	"github.com/alserok/goloom/internal/config"
 	"github.com/alserok/goloom/internal/server"
 	"github.com/alserok/goloom/internal/service"
 	"github.com/alserok/goloom/internal/storage/local"
+	"github.com/alserok/goloom/pkg/logger"
+	"github.com/alserok/goloom/static/pages"
+
 	"github.com/alserok/goloom/internal/workers"
 	state "github.com/alserok/goloom/internal/workers/health_state"
 	"github.com/alserok/goloom/internal/workers/stats"
-	"github.com/alserok/goloom/pkg/logger"
-	"github.com/alserok/goloom/static/pages"
-	"os/signal"
-	"syscall"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -35,7 +37,7 @@ func MustStart(cfg *config.Config) {
 	// entity in response of building html pages for web interface
 	pagesConstructor := pages.NewConstructor()
 
-	repo := local.NewRepository(local.MustSetup(cfg.Storage.Dir))
+	repo := local.NewRepository(local.MustSetup(cfg.Storage.RootDir, cfg.Storage.Dirs))
 	srvc := service.New(repo, pagesConstructor, broadcaster)
 	serv := server.New(server.HTTP, srvc, log)
 
