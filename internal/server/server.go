@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/alserok/goloom/internal/server/http"
+	"github.com/alserok/goloom/internal/server/http/v1"
 	"github.com/alserok/goloom/internal/service"
 	"github.com/alserok/goloom/pkg/logger"
 )
@@ -18,7 +18,7 @@ const (
 func New(t uint, srvc service.Service, log logger.Logger) Server {
 	switch t {
 	case HTTP:
-		return http.NewServer(srvc, log)
+		return v1.NewServer(srvc, log)
 	default:
 		panic("invalid server type")
 	}

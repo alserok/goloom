@@ -26,8 +26,8 @@ func (w worker) Start(ctx context.Context) {
 
 	log := logger.UnwrapLogger(ctx)
 
-	log.Info("starting 'stats' worker ✳️")
-	defer log.Info("closing 'stats' worker ✳️")
+	log.Info("starting stats ✅ ")
+	defer log.Info("closing stats ☑️ ")
 
 	type Stats struct {
 		Mem runtime.MemStats
@@ -41,7 +41,7 @@ func (w worker) Start(ctx context.Context) {
 			var stats Stats
 			runtime.ReadMemStats(&stats.Mem)
 
-			log.Info("stats worker results",
+			log.Info("stats",
 				logger.WithArg("alloc", stats.Mem.Alloc/1024/1024),
 				logger.WithArg("total_alloc", stats.Mem.TotalAlloc/1024/1024),
 				logger.WithArg("sys", stats.Mem.Sys/1024/1024),

@@ -40,8 +40,8 @@ func (w *worker) Start(ctx context.Context) {
 
 	log := logger.UnwrapLogger(ctx)
 
-	log.Info("starting 'health state' worker ✳️")
-	defer log.Info("closing 'health state' worker ✳️")
+	log.Info("starting health state ✅ ")
+	defer log.Info("closing health state ☑️ ")
 
 	for {
 		select {
@@ -85,7 +85,7 @@ func (w *worker) Start(ctx context.Context) {
 				}
 			}
 
-			log.Info("worker checked states 🛠️",
+			log.Info("checked states 🛠️",
 				logger.WithArg("services", len(services)),
 				logger.WithArg("succeeded", succeededReqs),
 				logger.WithArg("failed", failedReqs),
