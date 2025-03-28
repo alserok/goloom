@@ -1,8 +1,6 @@
 # Goloom 🪼
 
----
-
-## Goloom - useful tool for online configuration your apps and monitoring their states.
+### Goloom - useful tool for online configuration your apps and monitoring their states.
 
 ### Services state
 
@@ -20,11 +18,6 @@
 
 ![img.png](images/img3.png)
 
-### Configure
-
-Configure your app files online
-
----
 
 ## Simple setup
 
@@ -32,6 +25,7 @@ Configure your app files online
 1. The first one will let `goloom` know if app is alive and should it be 
 provided with file updates or not.
 2. The second one will let `goloom` make requests with data updates
+
 Body that you will receive
 ```json
 {
@@ -49,6 +43,56 @@ Body that you will receive
 `Delete` request
 
     http://${goloom_host}:${goloom_port}/service/remove?port={$app_port}
+
+## Examples
+
+### App example
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+
+	goloom "github.com/alserok/goloom/pkg/sdk/v1"
+)
+
+const (
+	port = 5000
+)
+
+type Config struct {
+	Path         string `json:"path"`
+	ContentBytes []byte `json:"contentBytes"`
+}
+
+func main() {
+	mux := http.NewServeMux()
+
+	goloomClient := goloom.NewClient("http://localhost:6070", strconv.Itoa(port))
+	goloomClient.NotifyStart()
+	defer goloomClient.NotifyClosure()
+
+	// Goloom checks service state by this route
+	mux.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	})
+
+	// Goloom sends file updates by this route
+	mux.HandleFunc("/update", func(writer http.ResponseWriter, request *http.Request) {
+		var cfg Config
+		json.NewDecoder(request.Body).Decode(&cfg)
+
+		fmt.Println(cfg)
+	})
+
+	http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+}
+
+```
 
 ### Compose file example
 

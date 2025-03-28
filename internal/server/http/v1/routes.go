@@ -1,4 +1,4 @@
-package http
+package v1
 
 import (
 	"github.com/alserok/goloom/internal/server/http/middleware"
@@ -9,12 +9,12 @@ import (
 func setupRoutes(mux *http.ServeMux, s *http.Server, h *handler, log logger.Logger) {
 	s.Handler = middleware.WithLogger(log)(s.Handler)
 
+	mux.HandleFunc("POST /v1/service/add", middleware.WithErrorHandler(h.AddService))
+	mux.HandleFunc("DELETE /v1/service/remove", middleware.WithErrorHandler(h.RemoveService))
+
 	mux.HandleFunc("PUT /config/update/", middleware.WithErrorHandler(h.UpdateConfig))
 	mux.HandleFunc("DELETE /config/delete/", middleware.WithErrorHandler(h.DeleteConfig))
 	mux.HandleFunc("GET /config/get/", middleware.WithErrorHandler(h.GetConfig))
-
-	mux.HandleFunc("POST /service/add", middleware.WithErrorHandler(h.AddService))
-	mux.HandleFunc("DELETE /service/remove", middleware.WithErrorHandler(h.RemoveService))
 
 	mux.HandleFunc("GET /web/config/file/", middleware.WithErrorHandler(h.GetConfigPage))
 	mux.HandleFunc("GET /web/config/dir/", middleware.WithErrorHandler(h.GetDirPage))
